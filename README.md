@@ -2,3 +2,10 @@
 
 По адресу http://localhost изучите фронтенд веб-приложения, а по адресу http://localhost/api/docs/ — спецификацию API.
 
+To create ingredients:
+
+```python
+python manage.py fill_db_with_ingredients
+```
+
+needed: ingredients.json in data folder
