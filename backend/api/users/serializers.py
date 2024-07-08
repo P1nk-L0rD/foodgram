@@ -2,10 +2,9 @@ import base64
 
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
-from recipes.models import Ingredient, Tag
 from rest_framework import serializers
 
-from .validators import username_validator
+from users.models import Subscription
 
 User = get_user_model()
 
@@ -24,13 +23,14 @@ class UserSerializer(serializers.ModelSerializer):
 
     username = serializers.CharField(
         max_length=254,
-        validators=[username_validator],
     )
 
     avatar = Base64ImageField(
         required=False,
         allow_null=True,
     )
+
+    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -41,18 +41,15 @@ class UserSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'avatar',
+            'is_subscribed',
         )
 
+    def get_is_subscribed(self, obj):
+        request = self.context.get('request')
 
-class TagSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Tag
-        fields = ('id', 'name', 'slug')
-
-
-class IngredientSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Ingredient
-        fields = ('id', 'name', 'measurement_unit')
+        return (
+            request and request.user.is_authenticated
+            and Subscription.objects.filter(
+                subscriber=request.user, author=obj
+            ).exists()
+        )

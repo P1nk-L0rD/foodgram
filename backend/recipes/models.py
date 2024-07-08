@@ -13,6 +13,10 @@ class Ingredient(models.Model):
         verbose_name="Название",
     )
 
+    surname = models.TextField(
+
+    )
+
     measurement_unit = models.CharField(
         max_length=MAX_NAME_LENGTH,
         verbose_name="Единица измерения",
@@ -22,6 +26,9 @@ class Ingredient(models.Model):
         ordering = ["id"]
         verbose_name = "Ингредиент"
         verbose_name_plural = "Ингредиенты"
+
+    def __str__(self) -> str:
+        return self.name
 
 
 class Tag(models.Model):
@@ -41,6 +48,9 @@ class Tag(models.Model):
         verbose_name = "Тег"
         verbose_name_plural = "Теги"
 
+    def __str__(self) -> str:
+        return self.name
+
 
 class Recipe(models.Model):
     name = models.CharField(
@@ -48,16 +58,16 @@ class Recipe(models.Model):
         verbose_name="Название",
     )
 
-    description = models.TextField(
-        verbose_name="Описание",
+    text = models.TextField(
+        verbose_name="Текст",
     )
 
     cooking_time = models.IntegerField(
-        verbose_name="Время приготовления",
         validators=[
             MinValueValidator(0),
             MaxValueValidator(1440),
         ],
+        verbose_name="Время приготовления",
     )
 
     pub_date = models.DateTimeField(
@@ -71,15 +81,19 @@ class Recipe(models.Model):
         User,
         on_delete=models.CASCADE,
         verbose_name="Автор",
+        related_name="recipes",
     )
 
     tags = models.ManyToManyField(
         Tag,
         verbose_name="Теги",
+        related_name="recipes",
+        # through="RecipeTags",
     )
 
     image = models.ImageField(
         verbose_name="Изображение",
+        upload_to="recipes",
     )
 
     ingredients = models.ManyToManyField(
@@ -87,12 +101,16 @@ class Recipe(models.Model):
         through="RecipeIngredients",
         blank=False,
         verbose_name="Ингредиенты",
+        related_name="recipes",
     )
 
     class Meta:
         ordering = ["-pub_date"]
         verbose_name = "Рецепт"
         verbose_name_plural = "Рецепты"
+
+    def __str__(self) -> str:
+        return self.name
 
 
 class RecipeIngredients(models.Model):
@@ -115,12 +133,19 @@ class RecipeIngredients(models.Model):
     )
 
 
-class FavoriteCartMixin(models.Model):
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-    )
+# class RecipeTags(models.Model):
+#     recipe = models.ForeignKey(
+#         Recipe,
+#         on_delete=models.CASCADE,
+#     )
 
+#     tag = models.ForeignKey(
+#         Tag,
+#         on_delete=models.CASCADE,
+#     )
+
+
+class FavoriteCartMixin(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE
@@ -138,6 +163,11 @@ class FavoriteCartMixin(models.Model):
 
 
 class Favorite(FavoriteCartMixin):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="favorites",
+    )
 
     class Meta:
         ordering = ["-pub_date"]
@@ -150,6 +180,12 @@ class Favorite(FavoriteCartMixin):
 
 
 class ShoppingCart(FavoriteCartMixin):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="shopping_cart",
+    )
+
     class Meta:
         ordering = ["-pub_date"]
         constraints = [

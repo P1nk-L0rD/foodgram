@@ -60,27 +60,27 @@ class User(AbstractUser):
 class Subscription(models.Model):
     """Модель подписок"""
 
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='sub_users',
-    )
-
     subscriber = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='main_user',
+        related_name='subscribed_to',
+    )
+
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='subscribers',
     )
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'subscriber'],
+                fields=['subscriber', 'author'],
                 name='unique_subscription',
             ),
         ]
 
-    def save(self, *args, **kwargs):
-        if self.user == self.subscriber:
-            raise ValueError("Пользователь не может подписаться на себя")
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if self.user == self.subscriber:
+    #         raise ValueError("Пользователь не может подписаться на себя")
+    #     super().save(*args, **kwargs)

@@ -4,8 +4,12 @@ from django.contrib.auth.admin import UserAdmin
 from .models import User
 
 
-UserAdmin.fieldsets += (
-    ('Extra Fields', {'fields': ('userpic',)}),
-)
+@admin.register(User)
+class CustomUserAdmin(admin.ModelAdmin):
+    list_display = ("username", "email", "first_name", "last_name")
+    search_fields = ('username', 'email', 'first_name')
 
-admin.site.register(User, UserAdmin)
+
+# UserAdmin.fieldsets += (
+#         ('Extra Fields', {'fields': ('userpic',)}),
+#     )
