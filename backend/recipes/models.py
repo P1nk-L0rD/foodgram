@@ -88,7 +88,6 @@ class Recipe(models.Model):
         Tag,
         verbose_name="Теги",
         related_name="recipes",
-        # through="RecipeTags",
     )
 
     image = models.ImageField(
@@ -117,11 +116,13 @@ class RecipeIngredients(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
+        related_name='ingredient_list',
     )
 
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
+        related_name='ingredient',
     )
 
     amount = models.IntegerField(

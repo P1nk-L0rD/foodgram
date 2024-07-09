@@ -1,29 +1,23 @@
-
+from ..users.serializers import Base64ImageField, UserSerializer
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from recipes.models import Ingredient, Tag, Recipe, RecipeIngredients
 from rest_framework import serializers
 
-from api.users.serializers import UserSerializer, Base64ImageField
-
+from recipes.models import Ingredient, Recipe, RecipeIngredients, Tag
 
 User = get_user_model()
 
 
-class RecipeShortSerializer(serializers.ModelSerializer):
-    """Сериализатор для короткого отображения рецептов."""
+class ShortRecipeSerializer(serializers.ModelSerializer):
+    """Короткие рецепты (только id, name, image, time)."""
 
     class Meta:
         model = Recipe
-        fields = (
-            'id',
-            'name',
-            'image',
-            'cooking_time'
-        )
+        fields = ('id', 'name', 'image', 'cooking_time')
 
 
 class TagSerializer(serializers.ModelSerializer):
+    """Сериалайзер для тегов."""
 
     class Meta:
         model = Tag
@@ -31,6 +25,7 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class IngredientSerializer(serializers.ModelSerializer):
+    """Сериалайзер для ингредиентов."""
 
     class Meta:
         model = Ingredient
@@ -38,20 +33,26 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class IngredientRecipeSerialiser(serializers.ModelSerializer):
-    # ingredient = IngredientSerializer(many=True, read_only=True)
+    """Сериалайзер для ингредиентов рецептов."""
 
     class Meta:
         model = RecipeIngredients
-        fields = ('id', )
+        fields = ('id',)
+
+    def list(self, request):
+        print(request, self)
+
+    def retrieve(self, request):
+        print(request, self)
 
 
 class RecipeSerializer(serializers.ModelSerializer):
+    """Сериалайзер для получения рецептов."""
+
     tags = TagSerializer(read_only=True, many=True)
-    # tags = serializers.PrimaryKeyRelatedField(
-    #     many=True, queryset=Tag.objects.all()
-    # )
     author = UserSerializer(read_only=True)
-    ingredients = IngredientRecipeSerialiser(read_only=True, many=True)
+    # ingredients = IngredientRecipeSerialiser(read_only=True, many=True)
+    ingredients = IngredientSerializer(read_only=True, many=True)
     image = Base64ImageField()
 
     class Meta:
@@ -64,8 +65,11 @@ class RecipeSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         recipe = Recipe.objects.create(**validated_data)
 
-        if "ingredients" not in self.initial_data:
-            raise serializers.ValidationError("Укажите ингредиенты!")
+        objects = ('ingredients', 'tags')
+
+        for object in objects:
+            if object not in self.initial_data:
+                raise serializers.ValidationError(f"Укажите {object}!")
 
         ingredients = self.initial_data.get('ingredients')
         for ingredient in ingredients:
@@ -77,14 +81,56 @@ class RecipeSerializer(serializers.ModelSerializer):
                 recipe=recipe, ingredient=ingredient, amount=amount
             )
 
-        # tags = self.initial_data.get('tags')
-        # Recipe.objects.filter(pk=recipe.pk).update(tags=tags)
-
+        tags = self.initial_data.get('tags')
+        for tag_id in tags:
+            tag = get_object_or_404(Tag, pk=tag_id)
+            recipe.tags.add(tag)
+        recipe.save()
         return recipe
 
+    def to_representation(self, instance):
 
-# class SubscriptionSerializer(serializers.ModelSerializer):
+        # print(self, instance)
+        print(instance.data)
 
-#     class Meta:
-#         model = Subscription
-#         fields = ()
+        return super().to_representation(instance)
+
+
+class RecipeCreateSerializer(RecipeSerializer):
+    """Сериалайзер для создания рецептов."""
+
+    tags = serializers.PrimaryKeyRelatedField(
+        read_only=False,
+        many=True,
+        queryset=Tag.objects.all(),
+    )
+
+    class Meta(RecipeSerializer.Meta):
+        ...
+
+    # def create(self, validated_data):
+    #     recipe = Recipe.objects.create(**validated_data)
+
+    #     if "ingredients" not in self.initial_data:
+    #         raise serializers.ValidationError("Укажите ингредиенты!")
+
+    #     ingredients = self.initial_data.get('ingredients')
+    #     for ingredient in ingredients:
+    #         pk = ingredient.get('id')
+    #         amount = ingredient.get('amount')
+    #         ingredient = get_object_or_404(Ingredient, pk=pk)
+
+    #         RecipeIngredients.objects.create(
+    #             recipe=recipe, ingredient=ingredient, amount=amount
+    #         )
+
+    #     return recipe
+
+
+class SubscriptionSerializer(UserSerializer):
+    """Сериалайзер для подписок."""
+
+    recipes = ShortRecipeSerializer(read_only=True, many=True)
+
+    class Meta(UserSerializer.Meta):
+        fields = (*UserSerializer.Meta.fields, "recipes")

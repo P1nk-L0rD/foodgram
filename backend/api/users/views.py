@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from users.models import Subscription
 
 from .serializers import UserSerializer
+from ..recipes.serializers import SubscriptionSerializer
 
 User = get_user_model()
 
@@ -20,54 +21,43 @@ class UserViewSet(djoser_views.UserViewSet):
     pagination_class = LimitOffsetPagination
     permission_classes = (permissions.AllowAny,)
 
-    def get_serializer_class(self):
-        """Доработать"""
-        if self.action == 'list':
-            return UserSerializer
-        return UserSerializer
-
-    # def get_permissions(self):
-    #     if self.action.startswith('me'):
-    #         return (permissions.IsAuthenticated(),)
-    #     return super().get_permissions()
-
     def retrieve(self, request, *args, **kwargs):
-        if self.action == 'me':
+        if self.action and self.action == 'me':
+            if self.request.user.is_anonymous:
+                return Response(status=status.HTTP_401_UNAUTHORIZED)
             kwargs = {'id': request.user.pk}
             self.action = 'retrieve'
 
         return super().retrieve(request, *args, **kwargs)
 
-    @action(methods=['PUT'], url_path='avatar', detail=True)
-    def set_avatar(self, request, id):
-        avatar = request.data.get('avatar')
-        User.objects.filter(pk=request.user.pk).update(
-            avatar=avatar
-        )
-
-        return Response({"avatar": avatar})
-
     @action(
-        methods=['PUT'],
+        methods=['PUT', 'DELETE'],
         detail=True,
         permission_classes=(permissions.IsAuthenticated,),
         url_path='avatar',
     )
-    def set_avatar2(self, request, id):
+    def manage_avatar(self, request, id):
+        """Функция для управления аватаркой."""
         user = self.request.user
-        serialiser = UserSerializer(user)
+        if request.method == 'PUT':
+            if 'avatar' not in request.data:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
 
-        if request.method == "PUT":
-            serialiser = UserSerializer(
-                user, data=request.data, partial=True,
+            serializer = UserSerializer(
+                user, data=request.data, partial=True
             )
-            serialiser.is_valid(raise_exception=True)
-            serialiser.save()
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
 
-            user = User.objects.get(pk=user.pk)
-            serialiser = UserSerializer(user)
-            return Response({"avatar": user.avatar}, status=status.HTTP_200_OK)
-        return Response(serialiser.data)
+            user = User.objects.get(pk=user.id)
+            return Response(
+                {"avatar": str(user.avatar)},
+                status=status.HTTP_200_OK,
+            )
+
+        if request.method == 'DELETE':
+            User.objects.filter(pk=user.id).update(avatar=None)
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         methods=['POST', 'DELETE'],
@@ -76,19 +66,32 @@ class UserViewSet(djoser_views.UserViewSet):
         url_path='subscribe',
     )
     def subscribe(self, request, id):
+        """Функция для подписки на других пользователей."""
         user = self.request.user
         to_sub = get_object_or_404(User, pk=id)
         if user == to_sub:
             return Response(
-                {"message": "Нельзя подписаться на самогос себя!"},
+                {"errors": "Нельзя подписаться на самого себя!"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        exist = Subscription.objects.filter(
+            subscriber=user, author=to_sub,
+        ).exists()
+
         if request.method == "POST":
+            if exist:
+                return Response(
+                    {"error": "Вы уже подписаны на этого пользователя!"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             Subscription.objects.create(
                 subscriber=user, author=to_sub,
             )
-            return Response(status=status.HTTP_201_CREATED)
+
+            serializer = SubscriptionSerializer(to_sub)
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         if request.method == "DELETE":
             Subscription.objects.filter(
@@ -103,4 +106,5 @@ class UserViewSet(djoser_views.UserViewSet):
         url_path='subscriptions',
     )
     def subscriptions(self, request):
+        """Функция для получения списка подписок."""
         ...

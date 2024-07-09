@@ -1,8 +1,10 @@
 from django_filters.rest_framework import DjangoFilterBackend
-from recipes.models import Ingredient, Tag, Recipe
 from rest_framework import filters, permissions, viewsets
 
-from .serializers import IngredientSerializer, TagSerializer, RecipeSerializer
+from recipes.models import Ingredient, Recipe, Tag
+from .serializers import (
+    IngredientSerializer, RecipeSerializer, TagSerializer
+)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -41,7 +43,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    def get_serializer_class(self):
-        if self.action in ('list', 'retrieve'):
-            return RecipeSerializer
-        return super().get_serializer_class()
+    # def get_serializer_class(self):
+    #     if self.action in ('create',):
+    #         return RecipeCreateSerializer
+    #     return super().get_serializer_class()
