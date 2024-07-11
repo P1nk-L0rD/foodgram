@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from rest_framework import serializers
 
+from users.constants import MAX_USERNAME_LEN
 from users.models import Subscription
 
 User = get_user_model()
@@ -22,7 +23,7 @@ class UserSerializer(serializers.ModelSerializer):
     '''Сериализатор для модели User'''
 
     username = serializers.CharField(
-        max_length=254,
+        max_length=MAX_USERNAME_LEN,
     )
 
     avatar = Base64ImageField(
@@ -30,18 +31,15 @@ class UserSerializer(serializers.ModelSerializer):
         allow_null=True,
     )
 
-    is_subscribed = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField(
+        read_only=True,
+    )
 
     class Meta:
         model = User
         fields = (
-            'email',
-            'id',
-            'username',
-            'first_name',
-            'last_name',
-            'avatar',
-            'is_subscribed',
+            'email', 'id', 'username', 'first_name',
+            'last_name', 'avatar', 'is_subscribed',
         )
 
     def get_is_subscribed(self, obj):
@@ -50,6 +48,6 @@ class UserSerializer(serializers.ModelSerializer):
         return (
             request and request.user.is_authenticated
             and Subscription.objects.filter(
-                subscriber=request.user, author=obj
+                user=request.user, author=obj
             ).exists()
         )

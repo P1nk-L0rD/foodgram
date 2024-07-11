@@ -76,7 +76,7 @@ class UserViewSet(djoser_views.UserViewSet):
             )
 
         exist = Subscription.objects.filter(
-            subscriber=user, author=to_sub,
+            user=user, author=to_sub,
         ).exists()
 
         if request.method == "POST":
@@ -86,7 +86,7 @@ class UserViewSet(djoser_views.UserViewSet):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             Subscription.objects.create(
-                subscriber=user, author=to_sub,
+                user=user, author=to_sub,
             )
 
             serializer = SubscriptionSerializer(to_sub)
@@ -95,7 +95,7 @@ class UserViewSet(djoser_views.UserViewSet):
 
         if request.method == "DELETE":
             Subscription.objects.filter(
-                subscriber=user, author=to_sub,
+                user=user, author=to_sub,
             ).delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 

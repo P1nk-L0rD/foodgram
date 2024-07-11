@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from .constants import MAX_NAME_LEN, MAX_DISPLAY_LEN, MAX_TEXT_LEN
+from .constants import MAX_DISPLAY_LEN, MAX_NAME_LEN, MAX_TEXT_LEN
 
 User = get_user_model()
 

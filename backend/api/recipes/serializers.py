@@ -131,6 +131,7 @@ class SubscriptionSerializer(UserSerializer):
     """Сериалайзер для подписок."""
 
     recipes = ShortRecipeSerializer(read_only=True, many=True)
+    recipes_count = serializers.ReadOnlyField(source='recipes.count')
 
     class Meta(UserSerializer.Meta):
-        fields = (*UserSerializer.Meta.fields, "recipes")
+        fields = (*UserSerializer.Meta.fields, 'recipes', 'recipes_count')
