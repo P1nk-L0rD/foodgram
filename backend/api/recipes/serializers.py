@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from recipes.models import Ingredient, Recipe, RecipeIngredients, Tag
+from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
 
 User = get_user_model()
 
@@ -36,7 +36,7 @@ class IngredientRecipeSerialiser(serializers.ModelSerializer):
     """Сериалайзер для ингредиентов рецептов."""
 
     class Meta:
-        model = RecipeIngredients
+        model = RecipeIngredient
         fields = ('id',)
 
     def list(self, request):
@@ -51,8 +51,8 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     tags = TagSerializer(read_only=True, many=True)
     author = UserSerializer(read_only=True)
-    # ingredients = IngredientRecipeSerialiser(read_only=True, many=True)
-    ingredients = IngredientSerializer(read_only=True, many=True)
+    ingredients = IngredientRecipeSerialiser(read_only=True, many=True)
+    # ingredients = IngredientSerializer(read_only=True, many=True)
     image = Base64ImageField()
 
     class Meta:
@@ -77,7 +77,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             amount = ingredient.get('amount')
             ingredient = get_object_or_404(Ingredient, pk=pk)
 
-            RecipeIngredients.objects.create(
+            RecipeIngredient.objects.create(
                 recipe=recipe, ingredient=ingredient, amount=amount
             )
 
@@ -88,12 +88,12 @@ class RecipeSerializer(serializers.ModelSerializer):
         recipe.save()
         return recipe
 
-    def to_representation(self, instance):
+    # def to_representation(self, instance):
 
-        # print(self, instance)
-        print(instance.data)
+    #     # print(self, instance)
+    #     print(instance.data)
 
-        return super().to_representation(instance)
+    #     return super().to_representation(instance)
 
 
 class RecipeCreateSerializer(RecipeSerializer):

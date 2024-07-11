@@ -32,7 +32,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     """Вьюсет для рецептов."""
 
     queryset = Recipe.objects.select_related('author').prefetch_related(
-        'tags', 'ingredients'
+        'tags', 'ingredient_list'
     )
 
     serializer_class = RecipeSerializer
