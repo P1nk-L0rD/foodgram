@@ -6,9 +6,9 @@ from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 
-from ..recipes.serializers import (SubscriptionCreateSerializer,
-                                   SubscriptionSerializer)
-from .serializers import UserSerializer
+from api.recipes.serializers import (SubscriptionCreateSerializer,
+                                     SubscriptionSerializer)
+from api.users.serializers import UserSerializer
 from users.models import Subscription
 
 User = get_user_model()

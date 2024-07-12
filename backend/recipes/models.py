@@ -2,10 +2,9 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from .constants import (
-    MAX_DISPLAY_LEN, MAX_NAME_LEN, MAX_TEXT_LEN, MIN_AMOUNT, MAX_AMOUNT,
-    MIN_COOKING_TIME, MAX_COOKING_TIME
-)
+from .constants import (MAX_AMOUNT, MAX_COOKING_TIME, MAX_DISPLAY_LEN,
+                        MAX_NAME_LEN, MAX_TEXT_LEN, MIN_AMOUNT,
+                        MIN_COOKING_TIME)
 
 User = get_user_model()
 
@@ -67,6 +66,8 @@ class Ingredient(BaseModel):
 
 
 class Recipe(BaseModel):
+    """Модель рецептов."""
+
     name = models.CharField(
         max_length=MAX_NAME_LEN,
         verbose_name="Название",
@@ -122,6 +123,8 @@ class Recipe(BaseModel):
 
 
 class RecipeIngredient(models.Model):
+    """Модель связи ингредиентов с рецептами."""
+
     recipe = models.ForeignKey(
         Recipe,
         verbose_name='Рецепт',
@@ -154,6 +157,8 @@ class RecipeIngredient(models.Model):
 
 
 class FavoriteCartMixin(models.Model):
+    """Миксин для избранного и корзины."""
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -174,6 +179,7 @@ class FavoriteCartMixin(models.Model):
 
 
 class Favorite(FavoriteCartMixin):
+    """Модель избранного."""
 
     class Meta(FavoriteCartMixin.Meta):
         verbose_name = "Избранное"
@@ -188,6 +194,7 @@ class Favorite(FavoriteCartMixin):
 
 
 class ShoppingCart(FavoriteCartMixin):
+    """Модель корзины."""
 
     class Meta(FavoriteCartMixin.Meta):
         verbose_name = "Корзина"

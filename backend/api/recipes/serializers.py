@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from rest_framework import serializers
 
-from ..users.serializers import Base64ImageField, UserSerializer
+from api.users.serializers import Base64ImageField, UserSerializer
 from recipes.constants import (MAX_AMOUNT, MAX_COOKING_TIME, MIN_AMOUNT,
                                MIN_COOKING_TIME)
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
@@ -189,9 +189,9 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
 
 class SubscriptionSerializer(UserSerializer):
-    """Сериалайзер для результата подписки."""
+    """Сериалайзер для получения результата подписки."""
 
-    recipes = ShortRecipeSerializer(read_only=True, many=True)
+    recipes = serializers.SerializerMethodField(read_only=True)
     recipes_count = serializers.ReadOnlyField(source='recipes.count')
 
     class Meta(UserSerializer.Meta):

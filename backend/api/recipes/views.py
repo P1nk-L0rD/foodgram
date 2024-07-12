@@ -7,15 +7,15 @@ from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 
 from .custom_filters import RecipeFilter
+from .custom_pagination import CustomPagination
 from .serializers import (FavoriteCreateSerializer, IngredientSerializer,
                           RecipeCreateSerializer, RecipeSerializer,
                           ShoppingCartCreateSerializer, SubscriptionSerializer,
                           TagSerializer)
-from api import custom_permissions
+from api.recipes import custom_permissions
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                             ShoppingCart, Tag)
 from users.models import Subscription
-from .custom_pagination import CustomPagination
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
