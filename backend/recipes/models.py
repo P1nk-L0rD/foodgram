@@ -2,7 +2,10 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from .constants import MAX_DISPLAY_LEN, MAX_NAME_LEN, MAX_TEXT_LEN
+from .constants import (
+    MAX_DISPLAY_LEN, MAX_NAME_LEN, MAX_TEXT_LEN, MIN_AMOUNT, MAX_AMOUNT,
+    MIN_COOKING_TIME, MAX_COOKING_TIME
+)
 
 User = get_user_model()
 
@@ -76,8 +79,8 @@ class Recipe(BaseModel):
 
     cooking_time = models.IntegerField(
         validators=[
-            MinValueValidator(0),
-            MaxValueValidator(1440),
+            MinValueValidator(MIN_COOKING_TIME),
+            MaxValueValidator(MAX_COOKING_TIME),
         ],
         verbose_name="Время приготовления",
     )
@@ -108,7 +111,6 @@ class Recipe(BaseModel):
     ingredients = models.ManyToManyField(
         Ingredient,
         through="RecipeIngredient",
-        blank=False,
         verbose_name="Ингредиенты",
         related_name="recipes",
     )
@@ -137,8 +139,8 @@ class RecipeIngredient(models.Model):
     amount = models.IntegerField(
         verbose_name="Количество",
         validators=[
-            MinValueValidator(1),
-            MaxValueValidator(100_000),
+            MinValueValidator(MIN_AMOUNT),
+            MaxValueValidator(MAX_AMOUNT),
         ],
     )
 

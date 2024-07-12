@@ -9,7 +9,9 @@ from rest_framework.response import Response
 from users.models import Subscription
 
 from .serializers import UserSerializer
-from ..recipes.serializers import SubscriptionSerializer
+from ..recipes.serializers import (
+    SubscriptionCreateSerializer, SubscriptionSerializer
+)
 
 User = get_user_model()
 
@@ -85,11 +87,13 @@ class UserViewSet(djoser_views.UserViewSet):
                     {"error": "Вы уже подписаны на этого пользователя!"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            Subscription.objects.create(
-                user=user, author=to_sub,
-            )
 
-            serializer = SubscriptionSerializer(to_sub)
+            serializer = SubscriptionCreateSerializer(
+                data={'user': user.id, 'author': to_sub.id},
+                context={'request': request},
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -107,4 +111,10 @@ class UserViewSet(djoser_views.UserViewSet):
     )
     def subscriptions(self, request):
         """Функция для получения списка подписок."""
-        ...
+
+        queryset = User.objects.filter(author__user=self.request.user)
+        pages = self.paginate_queryset(queryset)
+        serializer = SubscriptionSerializer(
+            pages, many=True, context={'request': request}
+        )
+        return self.get_paginated_response(serializer.data)

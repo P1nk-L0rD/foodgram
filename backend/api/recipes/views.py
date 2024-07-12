@@ -1,10 +1,22 @@
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, permissions, viewsets
+from rest_framework import filters, permissions, viewsets, status
+from rest_framework.decorators import action
+from django.shortcuts import get_object_or_404
+from rest_framework.response import Response
+from django.http import HttpResponse
 
-from recipes.models import Ingredient, Recipe, Tag
-from .serializers import (
-    IngredientSerializer, RecipeSerializer, TagSerializer
+from recipes.models import (
+    Ingredient, Recipe, Tag, Favorite, ShoppingCart, RecipeIngredient
 )
+from .serializers import (
+    IngredientSerializer, RecipeSerializer, TagSerializer,
+    RecipeCreateSerializer, SubscriptionSerializer, FavoriteCreateSerializer,
+    ShoppingCartCreateSerializer
+)
+
+from users.models import Subscription
+
+from api import custom_permissions
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -35,15 +47,145 @@ class RecipeViewSet(viewsets.ModelViewSet):
         'tags', 'ingredient_list'
     )
 
-    serializer_class = RecipeSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    permission_classes = (custom_permissions.IsAuthorOrReadOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('^name')
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    # def get_serializer_class(self):
-    #     if self.action in ('create',):
-    #         return RecipeCreateSerializer
-    #     return super().get_serializer_class()
+    def get_serializer_class(self):
+        if self.action in ('list', 'retrieve'):
+            return RecipeSerializer
+        return RecipeCreateSerializer
+
+    @action(
+        methods=['POST', 'DELETE'],
+        detail=True,
+        permission_classes=(permissions.IsAuthenticated,),
+        url_path='favorite',
+    )
+    def favorite(self, request, pk):
+        """Функция для добавления/удаления избранных рецептов."""
+        user = self.request.user
+        recipe = get_object_or_404(Recipe, pk=pk)
+
+        exist = Favorite.objects.filter(
+            user=user, recipe=recipe,
+        ).exists()
+
+        if request.method == 'POST':
+            if exist:
+                return Response(
+                    {'errors': "Рецепт уже в избранном!"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            serializer = FavoriteCreateSerializer(
+                data={'user': request.user.id, 'recipe': pk},
+                context={'request': request}
+            )
+
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        if request.method == 'DELETE':
+            if not exist:
+                return Response(
+                    {'errors': "Рецепта нет в избранном!"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            Favorite.objects.filter(
+                user=user, recipe=recipe
+            ).delete()
+
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        methods=['POST', 'DELETE'],
+        detail=True,
+        permission_classes=(permissions.IsAuthenticated,),
+        url_path='shopping_cart',
+    )
+    def shopping_cart(self, request, pk):
+        """Функция для добавления/удаления списка покупок."""
+        user = self.request.user
+        recipe = get_object_or_404(Recipe, pk=pk)
+
+        exist = ShoppingCart.objects.filter(
+            user=user, recipe=recipe,
+        ).exists()
+
+        if request.method == 'POST':
+            if exist:
+                return Response(
+                    {'errors': "Рецепт уже в списке покупок!"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            serializer = ShoppingCartCreateSerializer(
+                data={'user': request.user.id, 'recipe': pk},
+                context={'request': request}
+            )
+
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        if request.method == 'DELETE':
+            if not exist:
+                return Response(
+                    {'errors': "Рецепта нет в списке покупок!"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            ShoppingCart.objects.filter(
+                user=user, recipe=recipe
+            ).delete()
+
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        methods=['GET'],
+        detail=False,
+        permission_classes=(permissions.IsAuthenticated,),
+        url_path='download_shopping_cart',
+    )
+    def download_shopping_cart(self, request):
+        user = self.request.user
+
+        ingredients = RecipeIngredient.objects.filter(
+            recipe__shopping_carts__user=user
+        ).values(
+            'ingredient__id', 'ingredient__name',
+            'ingredient__measurement_unit', 'amount'
+        )
+
+        ingredients_list = dict()
+
+        for ingredient in ingredients:
+            ingredient_id = ingredient.get('ingredient__id')
+            amount = ingredient.get('amount')
+            if ingredient_id in ingredients_list:
+                ingredients_list[ingredient_id]['amount'] += amount
+            else:
+                ingredients_list[ingredient_id] = ingredient
+
+        answer_text = 'Список необходмых ингредиентов:\n\n'
+        for _, ingredient in ingredients_list.items():
+            ingredient_id, name, unit, amount = ingredient.values()
+            answer_text += f"{name}: {amount} {unit}\n"
+
+        return HttpResponse(
+            answer_text,
+            content_type='text/plain',
+            status=status.HTTP_200_OK
+        )
+
+
+class SubscriptionViewSet(viewsets.ReadOnlyModelViewSet):
+    """Вьюсет для подписок."""
+
+    queryset = Subscription.objects.select_related('author').prefetch_related(
+        'recipes'
+    )
+    serializer_class = SubscriptionSerializer
+    permission_classes = (permissions.IsAuthenticated,)
