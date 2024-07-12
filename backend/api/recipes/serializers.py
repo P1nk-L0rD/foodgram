@@ -1,17 +1,15 @@
 from collections import OrderedDict
 
-from ..users.serializers import Base64ImageField, UserSerializer
 from django.contrib.auth import get_user_model
+from django.core.validators import MaxValueValidator, MinValueValidator
 from rest_framework import serializers
-from django.core.validators import MinValueValidator, MaxValueValidator
 
-from recipes.models import (
-    Ingredient, Recipe, RecipeIngredient, Tag, Favorite, ShoppingCart
-)
+from ..users.serializers import Base64ImageField, UserSerializer
+from recipes.constants import (MAX_AMOUNT, MAX_COOKING_TIME, MIN_AMOUNT,
+                               MIN_COOKING_TIME)
+from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                            ShoppingCart, Tag)
 from users.models import Subscription
-from recipes.constants import (
-    MIN_AMOUNT, MAX_AMOUNT, MIN_COOKING_TIME, MAX_COOKING_TIME
-)
 
 User = get_user_model()
 
@@ -150,9 +148,9 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(f'Укажите {object}!')
 
             if isinstance(objects[0], OrderedDict):
-                obj_set = {object['id'] for object in objects}
+                obj_set = {one_object['id'] for one_object in objects}
             else:
-                obj_set = objects
+                obj_set = {tag for tag in objects}
 
             if len(objects) != len(obj_set):
                 raise serializers.ValidationError(
@@ -162,6 +160,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return attrs
 
     def update(self, instance: Recipe, validated_data):
+        validated_data = self.validate(validated_data)
         RecipeIngredient.objects.filter(recipe=instance).delete()
         instance.tags.clear()
 
@@ -197,6 +196,14 @@ class SubscriptionSerializer(UserSerializer):
 
     class Meta(UserSerializer.Meta):
         fields = (*UserSerializer.Meta.fields, 'recipes', 'recipes_count')
+
+    def get_recipes(self, obj):
+        request = self.context.get('request')
+        recipes = obj.recipes.all()
+        recipes_limit = request.query_params.get('recipes_limit')
+        if recipes_limit:
+            recipes = recipes[:int(recipes_limit)]
+        return ShortRecipeSerializer(recipes, many=True).data
 
 
 class SubscriptionCreateSerializer(serializers.ModelSerializer):

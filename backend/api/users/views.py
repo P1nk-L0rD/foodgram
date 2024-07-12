@@ -6,12 +6,10 @@ from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 
-from users.models import Subscription
-
+from ..recipes.serializers import (SubscriptionCreateSerializer,
+                                   SubscriptionSerializer)
 from .serializers import UserSerializer
-from ..recipes.serializers import (
-    SubscriptionCreateSerializer, SubscriptionSerializer
-)
+from users.models import Subscription
 
 User = get_user_model()
 
@@ -98,6 +96,11 @@ class UserViewSet(djoser_views.UserViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         if request.method == "DELETE":
+            if not exist:
+                return Response(
+                    {"errors": "Вы уже отписаны от этого пользователя!"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             Subscription.objects.filter(
                 user=user, author=to_sub,
             ).delete()

@@ -1,22 +1,21 @@
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, permissions, viewsets, status
-from rest_framework.decorators import action
-from django.shortcuts import get_object_or_404
-from rest_framework.response import Response
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, permissions, status, viewsets
+from rest_framework.decorators import action, api_view
+from rest_framework.response import Response
 
-from recipes.models import (
-    Ingredient, Recipe, Tag, Favorite, ShoppingCart, RecipeIngredient
-)
-from .serializers import (
-    IngredientSerializer, RecipeSerializer, TagSerializer,
-    RecipeCreateSerializer, SubscriptionSerializer, FavoriteCreateSerializer,
-    ShoppingCartCreateSerializer
-)
-
-from users.models import Subscription
-
+from .custom_filters import RecipeFilter
+from .serializers import (FavoriteCreateSerializer, IngredientSerializer,
+                          RecipeCreateSerializer, RecipeSerializer,
+                          ShoppingCartCreateSerializer, SubscriptionSerializer,
+                          TagSerializer)
 from api import custom_permissions
+from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                            ShoppingCart, Tag)
+from users.models import Subscription
+from .custom_pagination import CustomPagination
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -48,8 +47,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
 
     permission_classes = (custom_permissions.IsAuthorOrReadOnly,)
-    filter_backends = (filters.SearchFilter,)
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ('^name')
+    filterset_class = RecipeFilter
+    filterset_fields = ('name', 'author')
+    pagination_class = CustomPagination
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -87,7 +89,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         if request.method == 'DELETE':
             if not exist:
@@ -129,7 +131,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         if request.method == 'DELETE':
             if not exist:
@@ -179,6 +181,28 @@ class RecipeViewSet(viewsets.ModelViewSet):
             content_type='text/plain',
             status=status.HTTP_200_OK
         )
+
+    @action(
+        methods=['GET'],
+        detail=True,
+        permission_classes=(permissions.AllowAny,),
+        url_path='get-link',
+    )
+    def short_link(self, request, pk):
+        """Генератор коротких ссылок по адресу /api/s/"""
+        link_part = reverse('short_link_handler', args=[hex(int(pk))])
+        short_link = request.build_absolute_uri(link_part)
+        return Response(
+            {'short-link': short_link},
+            status=status.HTTP_200_OK
+        )
+
+
+@api_view(['GET'])
+def short_link_handler(request, slug):
+    """Приниматор коротких ссылок и переадрессатор на рецепт."""
+    recipe_pk = int(slug, 16)
+    return redirect(f'/api/recipes/{recipe_pk}/')
 
 
 class SubscriptionViewSet(viewsets.ReadOnlyModelViewSet):
