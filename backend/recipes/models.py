@@ -9,7 +9,7 @@ from .constants import (MAX_AMOUNT, MAX_COOKING_TIME, MAX_DISPLAY_LEN,
 User = get_user_model()
 
 
-class BaseModel(models.Model):
+class StringMixin(models.Model):
 
     class Meta:
         abstract = True
@@ -18,7 +18,7 @@ class BaseModel(models.Model):
         return self.name[:MAX_DISPLAY_LEN]
 
 
-class Tag(BaseModel):
+class Tag(StringMixin):
     """Модель тега."""
 
     name = models.CharField(
@@ -39,7 +39,7 @@ class Tag(BaseModel):
         default_related_name = "tag"
 
 
-class Ingredient(BaseModel):
+class Ingredient(StringMixin):
     """Модель ингредиента."""
 
     name = models.CharField(
@@ -65,7 +65,7 @@ class Ingredient(BaseModel):
         ]
 
 
-class Recipe(BaseModel):
+class Recipe(StringMixin):
     """Модель рецептов."""
 
     name = models.CharField(
@@ -151,6 +151,12 @@ class RecipeIngredient(models.Model):
         verbose_name = 'Ингредиент рецепта'
         verbose_name = 'Ингредиенты рецепта'
         ordering = ('id',)
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipe', 'ingredient'],
+                name='unique_recipe_ingredient',
+            ),
+        ]
 
     def __str__(self):
         return f'{self.ingredient} - {self.amount}'

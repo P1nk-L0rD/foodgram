@@ -11,11 +11,6 @@ class CustomUserAdmin(UserAdmin):
     search_fields = ('username', 'email', 'first_name', 'last_name')
 
 
-# UserAdmin.fieldsets += (
-#         ('Extra Fields', {'fields': ('avatar',)}),
-#     )
-
-
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
     list_display = ('user', 'author')

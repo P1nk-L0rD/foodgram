@@ -61,28 +61,23 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeSerializer
         return RecipeCreateSerializer
 
-    @action(
-        methods=['POST', 'DELETE'],
-        detail=True,
-        permission_classes=(permissions.IsAuthenticated,),
-        url_path='favorite',
-    )
-    def favorite(self, request, pk):
-        """Функция для добавления/удаления избранных рецептов."""
+    def favorite_cart_mixin(self, request, pk, model, serializer, name):
+        """Функци для корзины/избранного."""
+
         user = self.request.user
         recipe = get_object_or_404(Recipe, pk=pk)
 
-        exist = Favorite.objects.filter(
+        exist = model.objects.filter(
             user=user, recipe=recipe,
         ).exists()
 
         if request.method == 'POST':
             if exist:
                 return Response(
-                    {'errors': "Рецепт уже в избранном!"},
+                    {'errors': f"Рецепт уже в {name}!"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            serializer = FavoriteCreateSerializer(
+            serializer = serializer(
                 data={'user': request.user.id, 'recipe': pk},
                 context={'request': request}
             )
@@ -91,17 +86,30 @@ class RecipeViewSet(viewsets.ModelViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        if request.method == 'DELETE':
-            if not exist:
-                return Response(
-                    {'errors': "Рецепта нет в избранном!"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            Favorite.objects.filter(
-                user=user, recipe=recipe
-            ).delete()
+        if not exist:
+            return Response(
+                {'errors': f"Рецепта нет в {name}!"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        model.objects.filter(
+            user=user, recipe=recipe
+        ).delete()
 
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        methods=['POST', 'DELETE'],
+        detail=True,
+        permission_classes=(permissions.IsAuthenticated,),
+        url_path='favorite',
+    )
+    def favorite(self, request, pk):
+        """Функция для добавления/удаления избранных рецептов."""
+
+        return self.favorite_cart_mixin(
+            request, pk, Favorite, FavoriteCreateSerializer,
+            'favorite'
+        )
 
     @action(
         methods=['POST', 'DELETE'],
@@ -111,39 +119,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def shopping_cart(self, request, pk):
         """Функция для добавления/удаления списка покупок."""
-        user = self.request.user
-        recipe = get_object_or_404(Recipe, pk=pk)
+        print(request.path, pk)
 
-        exist = ShoppingCart.objects.filter(
-            user=user, recipe=recipe,
-        ).exists()
-
-        if request.method == 'POST':
-            if exist:
-                return Response(
-                    {'errors': "Рецепт уже в списке покупок!"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            serializer = ShoppingCartCreateSerializer(
-                data={'user': request.user.id, 'recipe': pk},
-                context={'request': request}
-            )
-
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        if request.method == 'DELETE':
-            if not exist:
-                return Response(
-                    {'errors': "Рецепта нет в списке покупок!"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            ShoppingCart.objects.filter(
-                user=user, recipe=recipe
-            ).delete()
-
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        return self.favorite_cart_mixin(
+            request, pk, ShoppingCart, ShoppingCartCreateSerializer,
+            'shopping_cart'
+        )
 
     @action(
         methods=['GET'],

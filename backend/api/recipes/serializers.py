@@ -125,18 +125,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
         recipe = Recipe.objects.create(**validated_data)
-
-        for tag_id in tags:
-            recipe.tags.add(tag_id)
-        recipe.save()
-
-        for ingredient in ingredients:
-            pk = ingredient.get('id')
-            amount = ingredient.get('amount')
-            RecipeIngredient.objects.create(
-                recipe=recipe, ingredient=pk, amount=amount
-            )
-
+        self.add_tags_and_ingredients(recipe, tags, ingredients)
         return recipe
 
     def validate(self, attrs):
@@ -160,25 +149,29 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return attrs
 
     def update(self, instance: Recipe, validated_data):
-        validated_data = self.validate(validated_data)
         RecipeIngredient.objects.filter(recipe=instance).delete()
         instance.tags.clear()
 
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
+        self.add_tags_and_ingredients(instance, tags, ingredients)
 
+        return super().update(instance, validated_data)
+
+    def add_tags_and_ingredients(self, recipe, tags, ingredients):
         for tag_id in tags:
-            instance.tags.add(tag_id)
-        instance.save()
+            recipe.tags.add(tag_id)
 
+        ingredient_list = []
         for ingredient in ingredients:
             pk = ingredient.get('id')
             amount = ingredient.get('amount')
-            RecipeIngredient.objects.create(
-                recipe=instance, ingredient=pk, amount=amount
+            ingredient_list.append(
+                RecipeIngredient(recipe=recipe, ingredient=pk, amount=amount)
             )
 
-        return super().update(instance, validated_data)
+        RecipeIngredient.objects.bulk_create(ingredient_list)
+        return recipe
 
     def to_representation(self, instance):
         request = self.context.get('request')
