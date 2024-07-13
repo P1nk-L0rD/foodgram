@@ -22,13 +22,15 @@ class UserViewSet(djoser_views.UserViewSet):
     permission_classes = (permissions.AllowAny,)
 
     def retrieve(self, request, *args, **kwargs):
-        if self.action and self.action == 'me':
-            if self.request.user.is_anonymous:
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
-            kwargs = {'id': request.user.pk}
-            self.action = 'retrieve'
+        if self.action != 'me':
+            return super().retrieve(self, request, *args, **kwargs)
 
-        return super().retrieve(request, *args, **kwargs)
+        if self.request.user.is_anonymous:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        kwargs = {'id': request.user.pk}
+        self.action = 'retrieve'
+        return super().retrieve(self, request, *args, **kwargs)
 
     @action(
         methods=['PUT', 'DELETE'],
@@ -40,16 +42,12 @@ class UserViewSet(djoser_views.UserViewSet):
         """Функция для управления аватаркой."""
         user = self.request.user
         if request.method == 'PUT':
-            if 'avatar' not in request.data:
-                return Response(status=status.HTTP_400_BAD_REQUEST)
-
             serializer = UserSerializer(
                 user, data=request.data, partial=True
             )
             serializer.is_valid(raise_exception=True)
             serializer.save()
 
-            user = User.objects.get(pk=user.id)
             return Response(
                 {"avatar": str(user.avatar)},
                 status=status.HTTP_200_OK,
@@ -95,16 +93,15 @@ class UserViewSet(djoser_views.UserViewSet):
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        if request.method == "DELETE":
-            if not exist:
-                return Response(
-                    {"errors": "Вы уже отписаны от этого пользователя!"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            Subscription.objects.filter(
-                user=user, author=to_sub,
-            ).delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        if not exist:
+            return Response(
+                {"errors": "Вы уже отписаны от этого пользователя!"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        Subscription.objects.filter(
+            user=user, author=to_sub,
+        ).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         methods=['GET'],

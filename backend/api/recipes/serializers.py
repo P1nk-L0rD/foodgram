@@ -4,7 +4,8 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from rest_framework import serializers
 
-from api.users.serializers import Base64ImageField, UserSerializer
+from api.users.fields import Base64ImageField
+from api.users.serializers import UserSerializer
 from recipes.constants import (MAX_AMOUNT, MAX_COOKING_TIME, MIN_AMOUNT,
                                MIN_COOKING_TIME)
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,

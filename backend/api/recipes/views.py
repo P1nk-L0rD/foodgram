@@ -1,3 +1,4 @@
+from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -13,6 +14,7 @@ from .serializers import (FavoriteCreateSerializer, IngredientSerializer,
                           ShoppingCartCreateSerializer, SubscriptionSerializer,
                           TagSerializer)
 from api.recipes import custom_permissions
+from api.recipes.constants import SCALE_OF_NOTATION
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                             ShoppingCart, Tag)
 from users.models import Subscription
@@ -133,28 +135,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_path='download_shopping_cart',
     )
     def download_shopping_cart(self, request):
-        user = self.request.user
-
         ingredients = RecipeIngredient.objects.filter(
-            recipe__shopping_carts__user=user
+            recipe__shopping_carts__user=self.request.user
         ).values(
-            'ingredient__id', 'ingredient__name',
-            'ingredient__measurement_unit', 'amount'
+            'ingredient__name', 'ingredient__measurement_unit'
+        ).annotate(amount=Sum('amount')).order_by(
+            'ingredient__name'
         )
 
-        ingredients_list = dict()
-
-        for ingredient in ingredients:
-            ingredient_id = ingredient.get('ingredient__id')
-            amount = ingredient.get('amount')
-            if ingredient_id in ingredients_list:
-                ingredients_list[ingredient_id]['amount'] += amount
-            else:
-                ingredients_list[ingredient_id] = ingredient
-
         answer_text = 'Список необходмых ингредиентов:\n\n'
-        for _, ingredient in ingredients_list.items():
-            ingredient_id, name, unit, amount = ingredient.values()
+        for ingredient in ingredients:
+            name, unit, amount = ingredient.values()
             answer_text += f"{name}: {amount} {unit}\n"
 
         return HttpResponse(
@@ -182,7 +173,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 @api_view(['GET'])
 def short_link_handler(request, slug):
     """Приниматор коротких ссылок и переадрессатор на рецепт."""
-    recipe_pk = int(slug, 16)
+    recipe_pk = int(slug, SCALE_OF_NOTATION)
     return redirect(f'/api/recipes/{recipe_pk}/')
 
 
