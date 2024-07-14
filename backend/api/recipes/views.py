@@ -7,7 +7,7 @@ from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 
-from .custom_filters import RecipeFilter
+from .custom_filters import IngredientFilter, RecipeFilter
 from .custom_pagination import CustomPagination
 from .serializers import (FavoriteCreateSerializer, IngredientSerializer,
                           RecipeCreateSerializer, RecipeSerializer,
@@ -35,9 +35,9 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = (permissions.AllowAny,)
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    filterset_fields = ('name',)
-    search_fields = ('^name',)
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = IngredientFilter
+    search_fields = ('name',)
     pagination_class = None
 
 
