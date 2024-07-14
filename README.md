@@ -68,6 +68,8 @@ To create ingredients:
 
 ```python
 python manage.py fill_db_with_ingredients
+# With Docker:
+sudo docker compose -f docker-compose.production.yml exec backend python manage.py fill_db_with_ingredients
 ```
 
 needed: ingredients.json in data folder
@@ -76,6 +78,8 @@ To create tags:
 
 ```python
 python manage.py fill_db_with_tags
+# With Docker:
+sudo docker compose -f docker-compose.production.yml exec backend python manage.py fill_db_with_tags
 ```
 
 needed: tags.json in data folder
