@@ -32,7 +32,7 @@ services:
       - static:/static
 
   nginx:
-    container_name: foodgram-nginx
+    container_name: foodgram-gateway
     build: ./nginx/
     env_file: .env
     depends_on:

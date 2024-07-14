@@ -30,7 +30,7 @@ services:
       - static:/static
 
   nginx:
-    image: mestepanik/foodgram-nginx
+    image: mestepanik/foodgram-gateway
     build: ./nginx/
     env_file: .env
     depends_on:
