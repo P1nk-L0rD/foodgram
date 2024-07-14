@@ -3,11 +3,9 @@
 
 ## Описание
 
-Сайт, куда можно вылкадывать рецепты еды.
+Сайт, куда можно выкладывать рецепты еды.
 
 Возможности сайта:
-
-Возможности:
 
 * Регистрация
 * Создание/редактирование/удаление своих рецептов
@@ -23,7 +21,7 @@
 ## Tech stack
 
 **Backend**
-Python (Django Framework, Django Rest Framework)
+Python (Django Framework, Django Rest Framework, django-filter, djoser), , Nginx, Gunicorn, Docker, GitHub Actions
 
 **Frontend**
 Javascript, React, CSS и другие

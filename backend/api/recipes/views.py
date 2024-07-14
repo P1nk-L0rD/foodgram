@@ -121,7 +121,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def shopping_cart(self, request, pk):
         """Функция для добавления/удаления списка покупок."""
-        print(request.path, pk)
 
         return self.favorite_cart_mixin(
             request, pk, ShoppingCart, ShoppingCartCreateSerializer,
