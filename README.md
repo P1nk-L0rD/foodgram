@@ -63,7 +63,7 @@ TELEGRAM_TO - ваш telegram id
 TELEGRAM_TOKEN - токен телеграм-бота, который пришлет вам уведомление
 ```
 
-8. Запушьте проект на GitHub
+8. Запушьте проект на GitHub или запустите Github Action
 
 ## Заполнение БД ингредиентами и тегами
 
@@ -89,4 +89,4 @@ needed: tags.json in data folder
 
 ## Authors
 
-Yandex + [me](https://github.com/P1nk-L0rD)
+Yandex + [Me](https://github.com/P1nk-L0rD)
