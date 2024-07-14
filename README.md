@@ -26,10 +26,41 @@ Python (Django Framework, Django Rest Framework, django-filter, djoser), , Nginx
 **Frontend**
 Javascript, React, CSS и другие
 
-## Deployment
+## Deployment on remote server
 
-Переименуйте .env.example -> .env
-Заполните своими данными
+1. Клонируйте репозиторий к себе на комьютер
+```
+git clone git@github.com:P1nk-L0rD/foodgram.git
+```
+2. Создайте папку foodgram на удаленном сервере
+3. Перенесите в папку файл docker-compose.production.yml
+4. Переименуйте .env.example -> .env, заполните его своими данными и положите в папку foodgram
+5. Обновите конфигурацию nginx на сервере, добавьте код:
+```
+location / {
+    proxy_set_header Host $http_host;
+    proxy_pass http://127.0.0.1:9080;
+}
+```
+Вы можете сменить порт, однако важно сделать это и в файле docker-compose.production.yml nginx -> ports
+6. Проверьте конфигурацию nginx и перезапустите его если все ок:
+```
+sudo nginx -t
+sudo service nginx reload
+```
+7. Добавьте данные в Github Actions:
+```
+DOCKER_USERNAME - юзернейм от DockerHub аккаунта
+DOCKER_PASSWORD -  пароль от DockerHub аккаунта
+HOST - IP-адрес удаленного сервера
+USER - имя пользователя на уделанном сервере
+SSH_KEY - SSH-ключ для подключения к серверу
+SSH_PASSPHRASE - пассфраза для подключения
+TELEGRAM_TO - ваш telegram id
+TELEGRAM_TOKEN - токен телеграм-бота, который пришлет вам уведомление
+```
+
+8. Запушьте проект на GitHub
 
 ## Заполнение БД ингредиентами и тегами
 
