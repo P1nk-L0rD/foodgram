@@ -53,9 +53,8 @@ class UserViewSet(djoser_views.UserViewSet):
                 status=status.HTTP_200_OK,
             )
 
-        if request.method == 'DELETE':
-            User.objects.filter(pk=user.id).update(avatar=None)
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        User.objects.filter(pk=user.id).update(avatar=None)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         methods=['POST', 'DELETE'],

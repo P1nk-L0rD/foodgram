@@ -139,14 +139,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
             recipe__shopping_carts__user=self.request.user
         ).values(
             'ingredient__name', 'ingredient__measurement_unit'
-        ).annotate(amount=Sum('amount')).order_by(
+        ).annotate(sum=Sum('amount')).order_by(
             'ingredient__name'
         )
 
         answer_text = 'Список необходмых ингредиентов:\n\n'
         for ingredient in ingredients:
-            name, unit, amount = ingredient.values()
-            answer_text += f"{name}: {amount} {unit}\n"
+            name, unit, sum = ingredient.values()
+            answer_text += f"{name}: {sum} {unit}\n"
 
         return HttpResponse(
             answer_text,
