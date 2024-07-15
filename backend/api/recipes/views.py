@@ -14,7 +14,7 @@ from .serializers import (FavoriteCreateSerializer, IngredientSerializer,
                           ShoppingCartCreateSerializer, SubscriptionSerializer,
                           TagSerializer)
 from api.recipes import custom_permissions
-from api.recipes.constants import SCALE_OF_NOTATION
+from api.recipes.constants import SCALE_OF_NOTATION, DOMAIN
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                             ShoppingCart, Tag)
 from users.models import Subscription
@@ -160,7 +160,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_path='get-link',
     )
     def short_link(self, request, pk):
-        """Генератор коротких ссылок по адресу /api/s/"""
+        """Генератор коротких ссылок формата /s/<slug>."""
         link_part = reverse('short_link_handler', args=[hex(int(pk))])
         short_link = request.build_absolute_uri(link_part)
         return Response(
@@ -172,7 +172,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
 def short_link_handler(request, slug):
     """Приниматор коротких ссылок и переадрессатор на рецепт."""
     recipe_pk = int(slug, SCALE_OF_NOTATION)
-    return redirect(f'/recipes/{recipe_pk}/')
+    full_link = f'https://{DOMAIN}/recipes/{recipe_pk}'
+    return redirect(full_link)
 
 
 class SubscriptionViewSet(viewsets.ReadOnlyModelViewSet):
