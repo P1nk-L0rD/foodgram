@@ -160,7 +160,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_path='get-link',
     )
     def short_link(self, request, pk):
-        """Генератор коротких ссылок формата /s/<slug>."""
+        """Генератор коротких ссылок формата /s/<slug>/."""
         link_part = reverse('short_link_handler', args=[hex(int(pk))])
         short_link = request.build_absolute_uri(link_part)
         return Response(
@@ -172,7 +172,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 def short_link_handler(request, slug):
     """Приниматор коротких ссылок и переадрессатор на рецепт."""
     recipe_pk = int(slug, SCALE_OF_NOTATION)
-    full_link = f'https://{DOMAIN}/recipes/{recipe_pk}'
+    full_link = f'https://{DOMAIN}/recipes/{recipe_pk}/'
     return redirect(full_link)
 
 
