@@ -173,7 +173,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 def short_link_handler(request, slug):
     """Приниматор коротких ссылок и переадрессатор на рецепт."""
     recipe_pk = int(slug, SCALE_OF_NOTATION)
-    return redirect(f'/api/recipes/{recipe_pk}/')
+    return redirect(f'/recipes/{recipe_pk}/')
 
 
 class SubscriptionViewSet(viewsets.ReadOnlyModelViewSet):

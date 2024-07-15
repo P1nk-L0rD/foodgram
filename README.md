@@ -32,27 +32,38 @@ Javascript, React, CSS и другие
 ## Deployment on remote server
 
 1. Клонируйте репозиторий к себе на комьютер
-```
+
+```bash
 git clone git@github.com:P1nk-L0rD/foodgram.git
 ```
+
 2. Создайте папку foodgram на удаленном сервере
+
 3. Перенесите в папку файл docker-compose.production.yml
+
 4. Переименуйте .env.example -> .env, заполните его своими данными и положите в папку foodgram
+
 5. Обновите конфигурацию nginx на сервере, добавьте код:
-```
+
+```bash
 location / {
     proxy_set_header Host $http_host;
     proxy_pass http://127.0.0.1:9080;
 }
 ```
+
 Вы можете сменить порт, однако важно сделать это и в файле docker-compose.production.yml nginx -> ports
+
 6. Проверьте конфигурацию nginx и перезапустите его если все ок:
-```
+
+```bash
 sudo nginx -t
 sudo service nginx reload
 ```
+
 7. Добавьте данные в Github Actions:
-```
+
+```bash
 DOCKER_USERNAME - юзернейм от DockerHub аккаунта
 DOCKER_PASSWORD -  пароль от DockerHub аккаунта
 HOST - IP-адрес удаленного сервера
