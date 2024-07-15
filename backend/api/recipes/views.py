@@ -14,7 +14,7 @@ from .serializers import (FavoriteCreateSerializer, IngredientSerializer,
                           ShoppingCartCreateSerializer, SubscriptionSerializer,
                           TagSerializer)
 from api.recipes import custom_permissions
-from api.recipes.constants import SCALE_OF_NOTATION, DOMAIN
+from api.recipes.constants import DOMAIN, SCALE_OF_NOTATION
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                             ShoppingCart, Tag)
 from users.models import Subscription
