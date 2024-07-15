@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions, status, viewsets
-from rest_framework.decorators import action, api_view
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .custom_filters import IngredientFilter, RecipeFilter
@@ -169,7 +169,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         )
 
 
-@api_view(['GET'])
 def short_link_handler(request, slug):
     """Приниматор коротких ссылок и переадрессатор на рецепт."""
     recipe_pk = int(slug, SCALE_OF_NOTATION)
