@@ -48,8 +48,9 @@ class UserViewSet(djoser_views.UserViewSet):
             serializer.is_valid(raise_exception=True)
             serializer.save()
 
+            avatar_link = request.build_absolute_uri(str(user.avatar))
             return Response(
-                {"avatar": str(user.avatar)},
+                {"avatar": avatar_link},
                 status=status.HTTP_200_OK,
             )
 
